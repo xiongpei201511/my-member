@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>会员管理系统</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { font-family: 'PingFang SC', 'Segoe UI', Arial, sans-serif; background: #f4f7fd; margin:0;padding:0;}
+    .container {
+      max-width: 950px; margin: 30px auto; background: #fff; 
+      box-shadow: 0 6px 22px rgba(54,98,186,0.10); border-radius:14px; padding: 24px 20px;
+    }
+    .container h2 { color: #294282; letter-spacing:2px;}
+    /* 按钮样式 */
+    .btn {
+      display:inline-block; padding:8px 18px; border:none; border-radius:5px;
+      color:#fff; cursor:pointer; font-size:15px; margin-right:8px; font-weight:500;
+      box-shadow: 0 1px 2px rgba(51,99,221,0.08);
+      transition: background .18s;
+    }
+    .btn:hover {opacity:0.93;}
+    .btn-add { background: #4CAF50; }
+    .btn-delete { background: #f34552; }
+    .btn-edit { background: #2869df; }
+    .btn-recharge { background: #ffba08; color: #463200;}
+    .btn-view { background: #26b7b9;}
+    .btn-stat { background: #7e3ff2; }
+    .btn-export { background: #2869df; }
+    .btn-import { background: #f08c1d; }
+    /* 搜索栏 */
+    .search-box { margin:18px 0 10px;}
+    .search-input {
+      padding: 6px 14px; border-radius:5px; border:1px solid #acc3e7; font-size:15px;
+      margin-right:10px; width:180px; background:#fafcff;
+      transition: border-color .17s;
+    }
+    .search-input:focus { border-color:#6d9eec;}
+    /* 表格美化 */
+    .member-table {
+      width: 100%; border-collapse: separate; border-spacing: 0; margin-bottom:16px;
+      background: #f9fbff; border-radius:14px; overflow: hidden;
+      box-shadow: 0 2px 8px rgba(103,119,204,0.08);
+    }
+    .member-table thead tr {
+      background: linear-gradient(90deg,#2869df 40%,#60a2f8);
+      color: #fff;
+      font-weight: 500;
+      letter-spacing: 1px;
+    }
+    .member-table th, .member-table td {
+      padding: 13px 7px; border-bottom: 1.5px solid #e8ecfa; min-width:66px;
+      font-size:15px;
+    }
+    .member-table th {
+      border-bottom: 2.3px solid #aacdf6;
+    }
+    .member-table tbody tr:nth-child(even) { background: #f2f7ff;}
+    .member-table tbody tr:hover { background: #e8f0ff;}
+    .member-table td.actions { text-align: right;}
+    .member-table { border-radius:13px; overflow: hidden; }
+    .member-table td, .member-table th {
+      border-right: 1.1px solid #eee;
+    }
+    .member-table th:last-child, .member-table td:last-child {
+      border-right:none;
+    }
+    /* 响应式 */
+    @media (max-width: 768px) {
+      .container { padding: 4px;width: 140%;margin: 0 auto;margin-top: 2%;}
+      .member-table th, .member-table td {font-size:13px; padding:9px 2px;}
+      .btn {font-size:13px; padding:6px 10px;}
+      .search-input{font-size:13px;}
+      .btn-export,.btn-import {padding:6px 10px;}
+	  .member-table {width: 100%;}
+    }
+    /* 分页器 */
+    .pager { margin:10px 0;}
+    .pager-btn {
+      display:inline-block; min-width: 30px; margin-right:5px; padding:5px 12px;
+      border-radius:5px; border:none; cursor:pointer; background:#f2f4fb; color:#3d4487;
+      font-weight:500; font-size:15px;
+    }
+    .pager-btn.active { background: #2869df; color: #fff;}
+    .pager-btn:disabled { color:#aaa;}
+    .stat-block {
+      margin:10px 0; padding:9px 13px; background:#ede9f8; border-radius:7px;
+      display:inline-block; color:#47326c; letter-spacing:1px;
+    }
+    .badge {
+      background: #388e3c; color: #fff; border-radius:9px; padding: 3px 9px; font-size:13px; font-weight:500;
+      box-shadow: 0 1px 1px rgba(25,89,40,0.06);
+    }
+    /* 美化弹窗表格 */
+    .consume-type { display:inline-block; padding:2px 7px;border-radius:7px; background:#eee; color:#482ca5; font-size:13px;}
+    .record-table { width:100%; border-collapse:collapse; border-radius:10px; overflow: hidden; background: #f6faff;}
+    .record-table th, .record-table td { padding:6px 7px; text-align:center;}
+    .record-table th { background:#d5e2fa;}
+    .record-table tr:nth-child(even) { background:#eff5fb;}
+    .record-pagination { text-align:center; margin-top: 5px;}
+    .recbtn {
+      background:#347af3;color:#fff;border:none;border-radius:5px;padding:4px 14px;font-size:15px;
+      margin:0 3px; font-weight:500; cursor:pointer; outline:none; box-shadow: 0 1px 2px #b6dfff23;
+    }
+    .recbtn[disabled]{background:#aaa;}
+    /* 弹窗美化 */
+    .swal2-popup.swal2-modal {
+      border-radius: 15px !important;
+      font-family: 'PingFang SC', Arial, sans-serif;
+      font-size:16px;
+      box-shadow: 0 0 0 4px #f3f6fb,0 8px 28px #31478121;
+      padding-bottom:12px;
+    }
+    .swal2-title {
+      color: #294282 !important;
+    }
+    .swal2-input {
+      border-radius:7px !important;
+      box-shadow: 0 1px 2px #e0eaff55 !important;
+      padding:9px 15px; font-size:16px;
+      border:1.5px solid #bfcefa !important;
+      margin-bottom: 7px !important;
+      background:#f7faff;
+    }
+    .swal2-input:focus{
+      border-color:#7cb3fa !important;
+      background:#f0f8ff;
+    }
+    .swal2-confirm {background-color: #17bf6f !important;}
+    .swal2-cancel {background-color: #e14 !important;}
+    .swal2-actions button {
+      min-width: 88px;
+      font-size: 15px;
+      font-weight: 500;
+      margin: 3px 7px;
+      border-radius:7px !important;
+    }
+    .swal2-html-container {margin:8px 0 7px !important;}
+    /* 右上角功能按钮整合 */
+    .func-btns {
+      display: inline-block;
+      float: right;
+      margin-top: 7px;
+    }
+    @media (max-width: 768px){
+      .func-btns {float:none;margin-top:4px;}
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="container">
+    <div style="margin-bottom:6px;overflow:auto;min-height:0;text-align: center;">
+      <h2 style="float:left;margin-top:4px;">会员管理系统</h2>
+      <div class="func-btns">
+        <button class="btn btn-export" @click="exportData">导出数据</button>
+        <button class="btn btn-import" @click="importData">导入数据</button>
+      </div>
+    </div>
+    <div style="clear:both"></div>
+    <!-- 搜索和新增 -->
+    <div class="search-box">
+      <input class="search-input" v-model.trim="search" placeholder="搜索会员名称/手机号">
+      <button class="btn btn-add" @click="addMemberPopup">+ 添加会员</button>
+      <button class="btn btn-stat" @click="monthlyStats">按月统计消费</button>
+    </div>
+    <!-- 会员表格 -->
+    <table class="member-table">
+      <thead>
+        <tr>
+          <th>姓名</th>
+          <th>手机号</th>
+          <th>余额</th>
+          <th>总消费</th>
+          <th>消费次数</th>
+          <th>上次消费</th>
+          <th class="actions">操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="m in pagedMembers" :key="m.id">
+          <td>{{m.name}}</td>
+          <td>{{m.phone}}</td>
+          <td><span class="badge">￥{{m.balance.toFixed(2)}}</span></td>
+          <td>￥{{totalConsume(m).toFixed(2)}}</td>
+          <td>{{m.records.length}}</td>
+          <td v-if="m.records.length > 0">{{m.records[m.records.length-1].date}}</td>
+          <td v-else>--</td>
+          <td class="actions">
+            <button class="btn btn-recharge" @click="rechargePopup(m)">充值</button>
+            <button class="btn btn-edit" @click="consumePopup(m)">消费</button>
+            <button class="btn btn-view" @click="viewRecords(m)">记录</button>
+            <button class="btn btn-delete" @click="deleteMember(m)">删除</button>
+          </td>
+        </tr>
+        <tr v-if="pagedMembers.length==0">
+          <td colspan="8" style="text-align:center; color:#aaa;">暂无数据</td>
+        </tr>
+      </tbody>
+    </table>
+    <!-- 分页器 -->
+    <div class="pager" v-if="totalPage>1">
+      <button class="pager-btn" :disabled="page==1" @click="page>1&&page--">«</button>
+      <button class="pager-btn" v-for="i in totalPage" 
+        :key="i" :class="{active:page==i}" @click="page=i">{{i}}</button>
+      <button class="pager-btn" :disabled="page==totalPage" @click="page<totalPage&&page++">»</button>
+    </div>
+  </div>
+  
+  <script>
+    // 数据key
+    const LOCAL_KEY = 'VIP_MEMBER_LIST_v1';
+    new Vue({
+      el: '#app',
+      data: {
+        members: [],
+        search: '',
+        page: 1,
+        pageSize: 7,
+      },
+      computed: {
+        filteredMembers() {
+          if(!this.search) return this.members;
+          const keyword = this.search.toLowerCase();
+          return this.members.filter(m => 
+            m.name.toLowerCase().includes(keyword) || 
+            m.phone.includes(keyword)
+          );
+        },
+        totalPage() {
+          return Math.ceil(this.filteredMembers.length/this.pageSize)||1;
+        },
+        pagedMembers() {
+          let start = (this.page-1)*this.pageSize;
+          return this.filteredMembers.slice(start, start + this.pageSize);
+        }
+      },
+      mounted() {
+        this.load();
+      },
+      watch: {
+        search() { this.page = 1; }
+      },
+      methods: {
+        save() {
+          localStorage.setItem(LOCAL_KEY, JSON.stringify(this.members));
+        },
+        load() {
+          let arr = [];
+          try {
+            arr = JSON.parse(localStorage.getItem(LOCAL_KEY)) || [];
+          } catch(e){}
+          for(let m of arr) if(!m.records)m.records=[];
+          this.members = arr;
+        },
+        // ------- 新增导出/导入方法 ------
+        exportData() {
+            const json = JSON.stringify(this.members, null, 2);
+            const blob = new Blob([json], {type:'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'vip-members-backup.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+            Swal.fire({
+              icon:'success',
+              title:'已导出',
+              text:'文件已下载到本地',
+              timer:1200,
+              showConfirmButton:false
+            });
+        },
+        importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json,application/json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if(!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    try {
+                        const arr = JSON.parse(ev.target.result);
+                        if (Array.isArray(arr) && arr.length && arr[0].name && arr[0].phone && arr[0].records) {
+                          Swal.fire({
+                              icon:'question',
+                              title: '确认导入？',
+                              html: `<div style="font-size:16px;">将覆盖当前会员数据，确定继续？<br>
+                              <small style="color:#a87;">共${arr.length}个会员</small></div>`,
+                              showCancelButton: true,
+                              confirmButtonText: '确定导入',
+                              cancelButtonText: '取消'
+                          }).then(res => {
+                              if(res.isConfirmed) {
+                                this.members = arr;
+                                this.save();
+                                Swal.fire({title:'导入成功',icon:'success',timer:1200,showConfirmButton:false})
+                              }
+                          })
+                        } else {
+                          throw new Error();
+                        }
+                    } catch(e) {
+                      Swal.fire({title:'导入失败',text:'文件格式错误',icon:'error'})
+                    }
+                }
+                reader.readAsText(file);
+            }
+            input.click();
+        },
+        // 会员相关 --------------------------
+        addMemberPopup() {
+          Swal.fire({
+            title: '添加会员',
+            html: `
+              <input id="name" class="swal2-input" placeholder="会员姓名" autofocus maxlength="16">
+              <input id="phone" class="swal2-input" placeholder="手机号码" maxlength="11">
+              <input id="balance" class="swal2-input" placeholder="初始余额(元)" type="number" min="0" value="0">
+            `,
+            focusConfirm: false,
+            confirmButtonColor:"#4CAF50",
+            preConfirm: () => {
+              const name = document.getElementById('name').value.trim();
+              const phone = document.getElementById('phone').value.trim();
+              const balance = parseFloat(document.getElementById('balance').value)||0;
+              if (!name || !phone) return Swal.showValidationMessage('请填写姓名和手机号');
+              if (!/^\d{11}$/.test(phone)) return Swal.showValidationMessage('请输入正确的11位手机号');
+              if(this.members.some(m=>m.phone===phone)) return Swal.showValidationMessage('手机号已存在');
+              return {name,phone,balance};
+            }
+          }).then(result=>{
+            if(result.isConfirmed){
+              const data = result.value;
+              this.members.push({
+                id: Date.now()+''+Math.floor(Math.random()*10000),
+                name: data.name,
+                phone: data.phone,
+                balance: parseFloat(data.balance||0)||0,
+                records: [], // 消费记录
+              });
+              this.save();
+              Swal.fire({title:'添加成功', icon:'success',showConfirmButton:false,timer:1200});
+            }
+          });
+        },
+        deleteMember(m) {
+          Swal.fire({
+            icon:'warning',
+            title:'删除确认',
+            text:`确定要删除会员 [${m.name}] 吗？此操作不可恢复`,
+            showCancelButton:true,
+            confirmButtonText:'删除',
+            confirmButtonColor:'#f34552'
+          }).then(res=>{
+            if(res.isConfirmed) {
+              this.members = this.members.filter(mem=>mem!==m);
+              this.save();
+              Swal.fire({title:'已删除','icon':'success',showConfirmButton:false,timer:1200});
+            }
+          });
+        },
+                rechargePopup(m) {
+                  Swal.fire({
+                    title: `给[${m.name}]充值`,
+                    input: 'number',
+                    inputPlaceholder: '输入充值金额',
+                    inputAttributes: {min:1,max:999999,step:0.01},
+                    showCancelButton: true,
+                    confirmButtonText:'充值',
+                    confirmButtonColor:'#ffba08',
+                    preConfirm: amt=>{
+                      if(!amt) return Swal.showValidationMessage('请输入金额');
+                      amt = parseFloat(amt);
+                      if(isNaN(amt) || amt<=0) return Swal.showValidationMessage('无效金额');
+                      return amt;
+                    }
+                  }).then(res=>{
+                    if(res.isConfirmed) {
+                      m.balance += parseFloat(res.value);
+                      this.save();
+                      Swal.fire({
+                        title:'充值成功!',
+                        text:`当前余额: ￥${m.balance.toFixed(2)}`,
+                        icon: 'success', confirmButtonColor:'#388e3c'
+                      });
+                    }
+                  });
+                },
+                totalConsume(m) {
+                  if(!m.records)return 0;
+                  return m.records.reduce((sum,r)=>sum+r.amount,0);
+                },
+                // 消费 ------------------------
+                consumePopup(m) {
+                  setTimeout(()=>{
+                  Swal.fire({
+                    title: `会员消费`,
+                    html: `
+                      <div style="margin-bottom:3px;margin-top:-10px;font-size:15px;color:#394b81;">
+                        会员：[<b>${m.name}</b>]　余额 <b style="color:#49a16d">￥${m.balance.toFixed(2)}</b>
+                      </div>
+                      <input id="amt" class="swal2-input" placeholder="消费金额" type="number" min="0.01" step="0.01">
+                      <input id="type" class="swal2-input" placeholder="消费类型 (例如美甲/美捷)" maxlength="18">
+                    `,
+                    confirmButtonColor:'#347af3',
+                    preConfirm: ()=>{
+                      let v = parseFloat(document.getElementById('amt').value);
+                      let typ = document.getElementById('type').value.trim();
+                      if(!v || v<=0) return Swal.showValidationMessage('请填写有效金额');
+                      if(v>m.balance) return Swal.showValidationMessage('余额不足');
+                      if(!typ) return Swal.showValidationMessage('消费类型, 例如美甲/美捷');
+                      return {amount: v, type: typ};
+                    }
+                  }).then(res=>{
+                    if(res.isConfirmed){
+                      m.balance -= parseFloat(res.value.amount);
+                      m.records = m.records || [];
+                      m.records.push({
+                        amount: parseFloat(res.value.amount),
+                        type: res.value.type,
+                        date: (new Date()).toLocaleString(),
+                      });
+                      this.save();
+                      Swal.fire({
+                        title:'消费成功',
+                        text:'已记录',
+                        icon:'success',
+                        confirmButtonColor:'#17bf6f',
+                        showConfirmButton:false,
+                        timer:1000
+                      });
+                    }
+                  });
+                  }, 60);
+                },
+                // 记录 -------------------------------
+                viewRecords(m) {
+                  let records = m.records || [];
+                  if(!records.length) {
+                    Swal.fire({
+                      title:'暂无记录',
+                      icon:'info',
+                      confirmButtonColor:'#358ef7'
+                    });
+                    return;
+                  }
+                  // 分页弹窗
+                  let page = 1, size = 5, total = Math.ceil(records.length/size)||1;
+                  const renderTable = ()=>{
+                    let arr = records.slice((page-1)*size, page*size);
+                    let html = `<table class="record-table">
+                      <tr>
+                        <th>金额</th><th>类型</th><th>日期</th>
+                      </tr>
+                      ${arr.map(r=>`<tr>
+                        <td style="color:#388e3c;font-weight:500;font-size:15px;">￥${r.amount.toFixed(2)}</td>
+                        <td><span class="consume-type">${r.type||'-'}</span></td>
+                        <td style="color:#384885;">${r.date}</td>
+                      </tr>`).join('')}
+                    </table>
+                    <div class="record-pagination">
+                      <button class="recbtn" id="recprev" ${page==1?"disabled":""}>«</button>
+                      <span style="margin:0 6px;font-size:15px;">${page}/${total}</span>
+                      <button class="recbtn" id="recnext" ${page==total?"disabled":""}>»</button>
+                    </div>
+                    `;
+                    Swal.fire({
+                      title: `消费记录　${m.name}`,
+                      html: html,
+                      showConfirmButton: false,
+                      width: '500px',
+                      willOpen:()=>{
+                        setTimeout(()=>{
+                          if(document.getElementById('recprev')) document.getElementById('recprev').onclick=()=>{page--;renderTable()};
+                          if(document.getElementById('recnext')) document.getElementById('recnext').onclick=()=>{page++;renderTable()};
+                        },90);
+                      }
+                    });
+                  };
+                  renderTable();
+                },
+                // 按月统计 --------------------
+                monthlyStats() {
+                  // 统计所有会员消费到各月
+                  let stat = {};
+                  for(let m of this.members) {
+                    for(let r of m.records||[]) {
+                      let month = (r.date||'').slice(0,7); // eg: 2024-06
+                      stat[month] = (stat[month]||0) + r.amount;
+                    }
+                  }
+                  let list = Object.keys(stat).sort((a,b)=>b.localeCompare(a))
+                            .map(m=>[m,stat[m]]);
+                  if(list.length==0){
+                    Swal.fire({title:'暂无消费记录', icon:'info', confirmButtonColor:'#358ef7'});
+                    return;
+                  }
+                  let html = `<table class="record-table">
+                    <tr><th>月份</th><th>总消费</th></tr>
+                    ${list.map(r=>`<tr>
+                        <td style="font-weight:500;letter-spacing:1px;">${r[0]}</td>
+                        <td style="color:#f13460;font-weight:600;">￥${r[1].toFixed(2)}</td>
+                      </tr>`).join('')}
+                  </table>`;
+                  Swal.fire({
+                    title:'按月消费汇总',
+                    html: html,
+                    width:460,
+                    confirmButtonColor:'#7e3ff2'
+                  });
+                }
+              }
+            });
+          </script>
+        </body>
+        </html>
